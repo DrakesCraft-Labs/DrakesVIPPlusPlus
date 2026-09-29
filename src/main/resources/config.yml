@@ -36,6 +36,15 @@ cosmetics:
   aura-enabled: true
   aura-interval-ticks: 10
 
+# Movimiento VIP.
+movement:
+  double-jump: true   # salto extra cosmetico con estela
+
+# Efectos de vida VIP.
+effects:
+  join-burst: true     # rafaga de particulas+sonido al entrar
+  kill-flourish: true  # fogonazo al matar a un enemigo
+
 # Cada cuanto revisa el scheduler las ventanas de booster (20 ticks = 1s).
 booster:
   check-interval-ticks: 200

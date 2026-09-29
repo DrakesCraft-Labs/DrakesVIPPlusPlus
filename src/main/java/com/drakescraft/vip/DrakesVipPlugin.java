@@ -63,6 +63,8 @@ public final class DrakesVipPlugin extends JavaPlugin {
                 new VipConnectionListener(this, vipManager, buffManager, skillHook), this);
         getServer().getPluginManager().registerEvents(new VipXpListener(boosterManager), this);
         getServer().getPluginManager().registerEvents(new VipAbilityListener(this, vipManager), this);
+        getServer().getPluginManager().registerEvents(
+                new com.drakescraft.vip.listener.VipEffectsListener(this, vipManager), this);
 
         // Comando
         if (getCommand("vip") != null) {
