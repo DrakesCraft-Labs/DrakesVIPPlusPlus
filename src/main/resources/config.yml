@@ -1,0 +1,41 @@
+# ============================================================
+#  DrakesVIP++  —  configuracion principal
+#  Standalone: SOLO LEE los grupos LuckPerms que entrega Odysseia (Tebex).
+#  No otorga rangos ni toca la entrega de compras.
+# ============================================================
+
+# Buffs pasivos por BANDA (se acumulan al tier). extra-hearts en corazones (1 = 2 HP).
+# effects: lista "TIPO:amplificador" (amplificador 0 = nivel I). Infinitos y ambientales.
+bands:
+  OLYMPIAN_BASE:
+    extra-hearts: 1
+    effects:
+      - "SPEED:0"
+  OLYMPIAN_HIGH:
+    extra-hearts: 3
+    effects:
+      - "SPEED:0"
+  TITAN:
+    extra-hearts: 5
+    effects:
+      - "SPEED:1"
+      - "NIGHT_VISION:0"
+
+# Habilidad activa (bandas alta y titan). Disparo: agacharse + tecla F (swap-hand).
+abilities:
+  cooldown-seconds: 30
+  # Mundos/modalidades donde NO aplican las habilidades de combate (prefijo de mundo).
+  # Recomendado: clasico y arenas PvP para no romper el balance.
+  disabled-worlds:
+    - clasico
+    - pvp
+    - arena
+
+# Aura cosmetica VIP (requiere permiso drakesvip.cosmetic.aura, on por defecto).
+cosmetics:
+  aura-enabled: true
+  aura-interval-ticks: 10
+
+# Cada cuanto revisa el scheduler las ventanas de booster (20 ticks = 1s).
+booster:
+  check-interval-ticks: 200

@@ -1,0 +1,124 @@
+package com.drakescraft.vip.manager;
+
+import com.drakescraft.vip.model.VipTier;
+
+import org.bukkit.NamespacedKey;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.logging.Logger;
+
+/**
+ * Aplica los buffs pasivos por banda (corazones extra + efectos de pocion
+ * infinitos y ambientales) leidos de tiers.yml. Idempotente: el modificador de
+ * vida se identifica por NamespacedKey, asi que re-aplicar no acumula.
+ */
+public final class VipBuffManager {
+
+    private final Plugin plugin;
+    private final Logger logger;
+    private final NamespacedKey healthKey;
+
+    public VipBuffManager(Plugin plugin) {
+        this.plugin = plugin;
+        this.logger = plugin.getLogger();
+        this.healthKey = new NamespacedKey(plugin, "vip_extra_hearts");
+    }
+
+    /** Aplica los buffs del tier (o los quita si tier es null). */
+    public void apply(Player player, VipTier tier) {
+        clear(player);
+        if (tier == null) {
+            return;
+        }
+        ConfigurationSection band = plugin.getConfig()
+                .getConfigurationSection("bands." + tier.getBand().name());
+        if (band == null) {
+            return;
+        }
+
+        double extraHearts = band.getDouble("extra-hearts", 0.0D);
+        if (extraHearts > 0.0D) {
+            applyExtraHearts(player, extraHearts * 2.0D); // 1 corazon = 2 puntos de vida
+        }
+
+        for (String raw : band.getStringList("effects")) {
+            PotionEffect effect = parseEffect(raw);
+            if (effect != null) {
+                player.addPotionEffect(effect);
+            }
+        }
+    }
+
+    /** Quita todos los buffs VIP del jugador. */
+    public void clear(Player player) {
+        AttributeInstance attr = player.getAttribute(Attribute.MAX_HEALTH);
+        if (attr != null) {
+            attr.getModifiers().stream()
+                    .filter(m -> healthKey.equals(m.getKey()))
+                    .forEach(attr::removeModifier);
+        }
+    }
+
+    private void applyExtraHearts(Player player, double amount) {
+        AttributeInstance attr = player.getAttribute(Attribute.MAX_HEALTH);
+        if (attr == null) {
+            return;
+        }
+        // Evita duplicar si ya existe (clear() lo remueve antes, pero por seguridad).
+        boolean exists = attr.getModifiers().stream().anyMatch(m -> healthKey.equals(m.getKey()));
+        if (!exists) {
+            attr.addModifier(new AttributeModifier(healthKey, amount, AttributeModifier.Operation.ADD_NUMBER));
+        }
+    }
+
+    /** Formato "TIPO:amplificador", p. ej. "SPEED:0" (Speed I). */
+    private PotionEffect parseEffect(String raw) {
+        try {
+            String[] parts = raw.split(":");
+            String name = parts[0].trim().toUpperCase(Locale.ROOT);
+            int amplifier = parts.length > 1 ? Integer.parseInt(parts[1].trim()) : 0;
+            PotionEffectType type = resolveType(name);
+            if (type == null) {
+                logger.warning("Efecto VIP desconocido en tiers.yml: " + raw);
+                return null;
+            }
+            return new PotionEffect(type, PotionEffect.INFINITE_DURATION, amplifier, true, false, false);
+        } catch (RuntimeException ex) {
+            logger.warning("Efecto VIP mal formado en tiers.yml: '" + raw + "' (" + ex.getMessage() + ")");
+            return null;
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private PotionEffectType resolveType(String name) {
+        PotionEffectType type = org.bukkit.Registry.EFFECT.get(NamespacedKey.minecraft(name.toLowerCase(Locale.ROOT)));
+        if (type == null) {
+            type = PotionEffectType.getByName(name);
+        }
+        return type;
+    }
+
+    /** Utilidad para listar los tipos aplicados (debug). */
+    public List<String> describe(VipTier tier) {
+        List<String> out = new ArrayList<>();
+        if (tier == null) {
+            return out;
+        }
+        ConfigurationSection band = plugin.getConfig().getConfigurationSection("bands." + tier.getBand().name());
+        if (band != null) {
+            out.add("+" + band.getDouble("extra-hearts", 0) + " corazones");
+            out.addAll(band.getStringList("effects"));
+        }
+        return out;
+    }
+}

@@ -1,0 +1,25 @@
+# ============================================================
+#  DrakesVIP++  —  boosters de fin de semana
+#  Auto-activados por horario. El VIP suma un extra sobre el global.
+#  Multiplicador efectivo = global * (1 + extra de la banda del jugador).
+# ============================================================
+
+boosters:
+  weekend-money:
+    days: [SATURDAY, SUNDAY]
+    windows: ["00:00-06:00", "16:00-22:00"]   # madrugada y tarde
+    global-multiplier: 2.0                      # x2 para todos
+    affects: [MONEY]
+    announce: true
+  weekend-xp:
+    days: [SATURDAY, SUNDAY]
+    windows: ["00:00-06:00", "16:00-22:00"]
+    global-multiplier: 2.0
+    affects: [XP, SKILL]
+    announce: true
+
+# Extra VIP sumado al global (0.25 => x2 se vuelve x2.25). Titan llega a x3.
+vip-extra:
+  olympian-base: 0.25   # tiers 1-6
+  olympian-high: 0.5    # tiers 7-10
+  titan: 1.0            # tiers 11-15

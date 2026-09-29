@@ -1,0 +1,29 @@
+# ============================================================
+#  DrakesVIP++  —  referencia de los 15 tiers (documentacion)
+#  El grupo LuckPerms lo entrega Odysseia; aqui solo se documenta que perk
+#  recibe cada tier. Los buffs efectivos se configuran por BANDA en config.yml.
+# ============================================================
+#
+#  Banda OLYMPIAN_BASE (1-6): boost economia/XP + cosmetico VIP + buff suave.
+#   1  hercules
+#   2  hestia
+#   3  hermes
+#   4  hefesto
+#   5  artemisa
+#   6  afrodita
+#
+#  Banda OLYMPIAN_HIGH (7-10): + habilidad divina activa (agacharse + F).
+#   7  zeus       -> descarga electrica en area
+#   8  thor       -> dash-trueno
+#   9  anubis     -> lifesteal a mobs cercanos
+#  10  poseidon   -> onda de empuje
+#
+#  Banda TITAN (11-15): todas las anteriores + pasiva titan + booster mas alto.
+#  11  titanjapeto
+#  12  titanoceanus
+#  13  titanhiperion
+#  14  titancronos    -> cooldown de habilidad -50%
+#  15  titancaos      -> tope: onda+rayo combinados, aura maxima
+#
+#  NOTA: para overrides por-tier (en el futuro) se puede anadir aqui una seccion
+#  'overrides:' con la clave del grupo; de momento los buffs van por banda.

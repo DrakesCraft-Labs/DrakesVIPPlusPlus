@@ -1,0 +1,19 @@
+name: DrakesVIPPlusPlus
+version: '${project.version}'
+main: com.drakescraft.vip.DrakesVipPlugin
+api-version: '1.21'
+author: DrakesCraft-Labs
+description: Perks activos por rango VIP (15 tiers) + booster de fin de semana. Lee LuckPerms; no toca la entrega Tebex de Odysseia.
+depend: [LuckPerms]
+softdepend: [Vault, PlaceholderAPI, AuraSkills, Odysseia]
+commands:
+  vip:
+    description: Muestra tu rango VIP, buffs y estado del booster. /vip reload para recargar.
+    aliases: [vips, drakesvip]
+permissions:
+  drakesvip.admin:
+    description: Permite /vip reload.
+    default: op
+  drakesvip.cosmetic.aura:
+    description: Activa el aura cosmetica VIP.
+    default: true
