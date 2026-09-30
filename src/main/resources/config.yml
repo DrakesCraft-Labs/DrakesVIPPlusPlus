@@ -38,7 +38,7 @@ cosmetics:
 
 # Movimiento VIP.
 movement:
-  double-jump: true   # salto extra cosmetico con estela
+  double-jump: false  # salto extra cosmetico; OFF por defecto (evita choques con GrimAC). Actívalo tras probar.
 
 # Efectos de vida VIP.
 effects:
