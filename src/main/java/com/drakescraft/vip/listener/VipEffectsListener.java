@@ -1,7 +1,9 @@
 package com.drakescraft.vip.listener;
 
 import com.drakescraft.vip.manager.VipManager;
+import com.drakescraft.vip.manager.VipToggleManager;
 import com.drakescraft.vip.model.VipTier;
+import com.drakescraft.vip.model.VipToggleType;
 
 import org.bukkit.Color;
 import org.bukkit.GameMode;
@@ -25,18 +27,19 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Efectos "de vida" del VIP: ráfaga de partículas+sonido al entrar, doble salto
  * cosmético con estela, y fogonazo al matar a un enemigo. Todo con toggles en
- * config ({@code movement.double-jump}, {@code effects.join-burst},
- * {@code effects.kill-flourish}) y respetando abilities.disabled-worlds.
+ * config y GUI por jugador (VipToggleType), respetando abilities.disabled-worlds.
  */
 public final class VipEffectsListener implements Listener {
 
     private final Plugin plugin;
     private final VipManager vipManager;
+    private final VipToggleManager toggleManager;
     private final Set<UUID> jumpCooldown = ConcurrentHashMap.newKeySet();
 
-    public VipEffectsListener(Plugin plugin, VipManager vipManager) {
+    public VipEffectsListener(Plugin plugin, VipManager vipManager, VipToggleManager toggleManager) {
         this.plugin = plugin;
         this.vipManager = vipManager;
+        this.toggleManager = toggleManager;
     }
 
     // ---- Ráfaga de entrada ----
@@ -46,6 +49,9 @@ public final class VipEffectsListener implements Listener {
             return;
         }
         Player player = event.getPlayer();
+        if (!toggleManager.isEnabled(player, VipToggleType.JOIN_BURST)) {
+            return;
+        }
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (!player.isOnline()) {
                 return;
@@ -66,10 +72,10 @@ public final class VipEffectsListener implements Listener {
     // ---- Doble salto ----
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
-        if (!plugin.getConfig().getBoolean("movement.double-jump", true)) {
+        Player player = event.getPlayer();
+        if (!toggleManager.isEnabled(player, VipToggleType.DOUBLE_JUMP)) {
             return;
         }
-        Player player = event.getPlayer();
         if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) {
             return;
         }
@@ -84,10 +90,10 @@ public final class VipEffectsListener implements Listener {
 
     @EventHandler
     public void onToggleFlight(PlayerToggleFlightEvent event) {
-        if (!plugin.getConfig().getBoolean("movement.double-jump", true)) {
+        Player player = event.getPlayer();
+        if (!toggleManager.isEnabled(player, VipToggleType.DOUBLE_JUMP)) {
             return;
         }
-        Player player = event.getPlayer();
         if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) {
             return; // vuelo real, no tocar
         }
@@ -118,6 +124,9 @@ public final class VipEffectsListener implements Listener {
         }
         Player killer = event.getEntity().getKiller();
         if (killer == null || !vipManager.isVip(killer)) {
+            return;
+        }
+        if (!toggleManager.isEnabled(killer, VipToggleType.KILL_FLOURISH)) {
             return;
         }
         var loc = event.getEntity().getLocation().add(0, 0.8, 0);

@@ -2,10 +2,13 @@ package com.drakescraft.vip.command;
 
 import com.drakescraft.vip.DrakesVipPlugin;
 import com.drakescraft.vip.api.DrakesVipApi;
+import com.drakescraft.vip.gui.VipGui;
 import com.drakescraft.vip.model.VipTier;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -15,15 +18,18 @@ import org.bukkit.entity.Player;
 import javax.annotation.Nonnull;
 
 /**
- * {@code /vip}: muestra tu rango, banda, buffs y estado del booster.
+ * {@code /vip}: abre el menú GUI interactivo para configurar habilidades y efectos.
+ * {@code /vip info}: muestra el resumen textual de rango, banda y boosters.
  * {@code /vip reload} (permiso staff) recarga config/tiers/boosters en caliente.
  */
 public final class VipCommand implements CommandExecutor {
 
     private final DrakesVipPlugin plugin;
+    private final VipGui vipGui;
 
-    public VipCommand(DrakesVipPlugin plugin) {
+    public VipCommand(DrakesVipPlugin plugin, VipGui vipGui) {
         this.plugin = plugin;
+        this.vipGui = vipGui;
     }
 
     @Override
@@ -44,11 +50,31 @@ public final class VipCommand implements CommandExecutor {
             return true;
         }
 
+        if (args.length > 0) {
+            String sub = args[0].toLowerCase();
+            switch (sub) {
+                case "all", "tiers", "catalogo", "catalog", "rangos", "lista" -> {
+                    vipGui.openCatalog(player);
+                    return true;
+                }
+                case "info" -> {
+                    showInfo(player);
+                    return true;
+                }
+            }
+        }
+
+        // Por defecto abre el menú interactivo
+        vipGui.open(player);
+        return true;
+    }
+
+    private void showInfo(Player player) {
         VipTier tier = DrakesVipApi.getTier(player);
         player.sendMessage(Component.text("━━━━━━ DrakesVIP++ ━━━━━━", NamedTextColor.GOLD));
         if (tier == null) {
             player.sendMessage(Component.text("No tienes rango VIP activo.", NamedTextColor.GRAY));
-            player.sendMessage(Component.text("Consíguelo en la tienda y potencia tu juego.", NamedTextColor.YELLOW));
+            player.sendMessage(Component.text("Consíguelo en la tienda y potencia tu juego: web.drakescraft.cl", NamedTextColor.YELLOW));
         } else {
             player.sendMessage(Component.text("Rango: ", NamedTextColor.GRAY)
                     .append(Component.text(tier.name() + " (#" + tier.getHierarchy() + ")", NamedTextColor.AQUA)));
@@ -58,10 +84,12 @@ public final class VipCommand implements CommandExecutor {
         player.sendMessage(Component.text("Booster dinero: x" + fmt(DrakesVipApi.getMoneyMultiplier(player)), NamedTextColor.GREEN));
         player.sendMessage(Component.text("Booster XP: x" + fmt(DrakesVipApi.getXpMultiplier(player)), NamedTextColor.GREEN));
         player.sendMessage(Component.text("Booster skills: x" + fmt(DrakesVipApi.getSkillMultiplier(player)), NamedTextColor.GREEN));
-        if (tier != null && tier.getBand() != VipTier.VipBand.OLYMPIAN_BASE) {
-            player.sendMessage(Component.text("Habilidad: agáchate + tecla F", NamedTextColor.YELLOW));
-        }
-        return true;
+
+        Component menuLink = Component.text("[Abrir Configuración VIP]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                .clickEvent(ClickEvent.runCommand("/vip"));
+        Component catalogLink = Component.text(" [Ver Catálogo de Todos los Rangos]", NamedTextColor.GOLD, TextDecoration.UNDERLINED)
+                .clickEvent(ClickEvent.runCommand("/vip catalogo"));
+        player.sendMessage(menuLink.append(catalogLink));
     }
 
     private String fmt(double d) {

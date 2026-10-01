@@ -2,6 +2,8 @@ package com.drakescraft.vip.manager;
 
 import com.drakescraft.vip.model.VipTier;
 
+import com.drakescraft.vip.model.VipToggleType;
+
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -27,6 +29,7 @@ public final class VipBuffManager {
     private final Plugin plugin;
     private final Logger logger;
     private final NamespacedKey healthKey;
+    private VipToggleManager toggleManager;
 
     public VipBuffManager(Plugin plugin) {
         this.plugin = plugin;
@@ -34,10 +37,17 @@ public final class VipBuffManager {
         this.healthKey = new NamespacedKey(plugin, "vip_extra_hearts");
     }
 
-    /** Aplica los buffs del tier (o los quita si tier es null). */
+    public void setToggleManager(VipToggleManager toggleManager) {
+        this.toggleManager = toggleManager;
+    }
+
+    /** Aplica los buffs del tier (o los quita si tier es null o estan desactivados). */
     public void apply(Player player, VipTier tier) {
         clear(player);
         if (tier == null) {
+            return;
+        }
+        if (toggleManager != null && !toggleManager.isEnabled(player, VipToggleType.PASSIVE_BUFFS)) {
             return;
         }
         ConfigurationSection band = plugin.getConfig()
@@ -84,13 +94,18 @@ public final class VipBuffManager {
         };
     }
 
-    /** Quita todos los buffs VIP del jugador. */
+    /** Quita todos los buffs VIP del jugador (corazones y pociones infinitas). */
     public void clear(Player player) {
         AttributeInstance attr = player.getAttribute(Attribute.MAX_HEALTH);
         if (attr != null) {
             attr.getModifiers().stream()
                     .filter(m -> healthKey.equals(m.getKey()))
                     .forEach(attr::removeModifier);
+        }
+        for (PotionEffect pe : player.getActivePotionEffects()) {
+            if (pe.isInfinite()) {
+                player.removePotionEffect(pe.getType());
+            }
         }
     }
 

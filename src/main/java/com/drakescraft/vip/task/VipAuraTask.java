@@ -1,7 +1,9 @@
 package com.drakescraft.vip.task;
 
 import com.drakescraft.vip.manager.VipManager;
+import com.drakescraft.vip.manager.VipToggleManager;
 import com.drakescraft.vip.model.VipTier;
+import com.drakescraft.vip.model.VipToggleType;
 
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -21,11 +23,13 @@ public final class VipAuraTask extends BukkitRunnable {
 
     private final Plugin plugin;
     private final VipManager vipManager;
+    private final VipToggleManager toggleManager;
     private double phase;
 
-    public VipAuraTask(Plugin plugin, VipManager vipManager) {
+    public VipAuraTask(Plugin plugin, VipManager vipManager, VipToggleManager toggleManager) {
         this.plugin = plugin;
         this.vipManager = vipManager;
+        this.toggleManager = toggleManager;
     }
 
     @Override
@@ -37,6 +41,9 @@ public final class VipAuraTask extends BukkitRunnable {
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             VipTier tier = vipManager.getTier(player);
             if (tier == null || !player.hasPermission("drakesvip.cosmetic.aura")) {
+                continue;
+            }
+            if (!toggleManager.isEnabled(player, VipToggleType.AURA)) {
                 continue;
             }
             switch (tier.getBand()) {

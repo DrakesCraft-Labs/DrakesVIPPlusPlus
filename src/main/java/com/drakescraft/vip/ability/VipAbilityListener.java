@@ -1,7 +1,9 @@
 package com.drakescraft.vip.ability;
 
 import com.drakescraft.vip.manager.VipManager;
+import com.drakescraft.vip.manager.VipToggleManager;
 import com.drakescraft.vip.model.VipTier;
+import com.drakescraft.vip.model.VipToggleType;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -38,11 +40,13 @@ public final class VipAbilityListener implements Listener {
 
     private final Plugin plugin;
     private final VipManager vipManager;
+    private final VipToggleManager toggleManager;
     private final Map<UUID, Long> cooldowns = new ConcurrentHashMap<>();
 
-    public VipAbilityListener(Plugin plugin, VipManager vipManager) {
+    public VipAbilityListener(Plugin plugin, VipManager vipManager, VipToggleManager toggleManager) {
         this.plugin = plugin;
         this.vipManager = vipManager;
+        this.toggleManager = toggleManager;
     }
 
     @EventHandler
@@ -56,6 +60,9 @@ public final class VipAbilityListener implements Listener {
             return;
         }
         if (isDisabledWorld(player)) {
+            return;
+        }
+        if (!toggleManager.isEnabled(player, VipToggleType.ABILITY)) {
             return;
         }
 

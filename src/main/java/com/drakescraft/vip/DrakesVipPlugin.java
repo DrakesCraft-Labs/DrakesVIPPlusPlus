@@ -6,9 +6,12 @@ import com.drakescraft.vip.command.VipCommand;
 import com.drakescraft.vip.hook.SkillHook;
 import com.drakescraft.vip.listener.VipConnectionListener;
 import com.drakescraft.vip.listener.VipXpListener;
+import com.drakescraft.vip.gui.VipGui;
+import com.drakescraft.vip.gui.VipMenuHolder;
 import com.drakescraft.vip.manager.BoosterManager;
 import com.drakescraft.vip.manager.VipBuffManager;
 import com.drakescraft.vip.manager.VipManager;
+import com.drakescraft.vip.manager.VipToggleManager;
 import com.drakescraft.vip.model.VipTier;
 import com.drakescraft.vip.task.BoosterScheduler;
 import com.drakescraft.vip.task.VipAuraTask;
@@ -31,6 +34,8 @@ public final class DrakesVipPlugin extends JavaPlugin {
     private VipBuffManager buffManager;
     private BoosterManager boosterManager;
     private SkillHook skillHook;
+    private VipToggleManager toggleManager;
+    private VipGui vipGui;
 
     private BoosterScheduler boosterScheduler;
     private VipAuraTask auraTask;
@@ -52,9 +57,14 @@ public final class DrakesVipPlugin extends JavaPlugin {
         }
 
         this.buffManager = new VipBuffManager(this);
+        this.toggleManager = new VipToggleManager(this);
+        this.buffManager.setToggleManager(toggleManager);
+        this.toggleManager.setManagers(vipManager, buffManager);
+
         this.boosterManager = new BoosterManager(getLogger(), vipManager);
         this.boosterManager.load(boostersConfig);
         this.skillHook = new SkillHook(this, boosterManager);
+        this.vipGui = new VipGui(vipManager, boosterManager, toggleManager);
 
         DrakesVipApi.init(vipManager, boosterManager);
 
@@ -62,13 +72,15 @@ public final class DrakesVipPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new VipConnectionListener(this, vipManager, buffManager, skillHook), this);
         getServer().getPluginManager().registerEvents(new VipXpListener(boosterManager), this);
-        getServer().getPluginManager().registerEvents(new VipAbilityListener(this, vipManager), this);
+        getServer().getPluginManager().registerEvents(new VipAbilityListener(this, vipManager, toggleManager), this);
         getServer().getPluginManager().registerEvents(
-                new com.drakescraft.vip.listener.VipEffectsListener(this, vipManager), this);
+                new com.drakescraft.vip.listener.VipEffectsListener(this, vipManager, toggleManager), this);
+        getServer().getPluginManager().registerEvents(
+                new com.drakescraft.vip.listener.VipMenuListener(vipManager, toggleManager, vipGui), this);
 
         // Comando
         if (getCommand("vip") != null) {
-            getCommand("vip").setExecutor(new VipCommand(this));
+            getCommand("vip").setExecutor(new VipCommand(this, vipGui));
         }
 
         // Tasks
@@ -77,7 +89,7 @@ public final class DrakesVipPlugin extends JavaPlugin {
         this.boosterScheduler.runTaskTimer(this, 100L, checkTicks);
 
         long auraTicks = getConfig().getLong("cosmetics.aura-interval-ticks", 10L);
-        this.auraTask = new VipAuraTask(this, vipManager);
+        this.auraTask = new VipAuraTask(this, vipManager, toggleManager);
         this.auraTask.runTaskTimer(this, 40L, auraTicks);
 
         // Refresca a quienes ya estan conectados (reload en caliente)
@@ -87,7 +99,7 @@ public final class DrakesVipPlugin extends JavaPlugin {
             skillHook.refresh(player);
         }
 
-        getLogger().info("DrakesVIP++ habilitado: 15 tiers + booster de finde.");
+        getLogger().info("DrakesVIP++ habilitado: 15 tiers + booster de finde + GUI de alternancia.");
     }
 
     @Override
