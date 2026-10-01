@@ -26,10 +26,12 @@ public final class VipCommand implements CommandExecutor {
 
     private final DrakesVipPlugin plugin;
     private final VipGui vipGui;
+    private final com.drakescraft.vip.manager.VipManager vipManager;
 
-    public VipCommand(DrakesVipPlugin plugin, VipGui vipGui) {
+    public VipCommand(DrakesVipPlugin plugin, VipGui vipGui, com.drakescraft.vip.manager.VipManager vipManager) {
         this.plugin = plugin;
         this.vipGui = vipGui;
+        this.vipManager = vipManager;
     }
 
     @Override
@@ -64,7 +66,23 @@ public final class VipCommand implements CommandExecutor {
             }
         }
 
-        // Por defecto abre el menú interactivo
+        // Restricción de comando /vip:
+        // Solo debe funcionar si tiene el rango pertinente directamente en LuckPerms (primer rango de pago: Hércules).
+        if (!vipManager.isVip(player)) {
+            player.sendMessage(Component.text("━━━━━━ DrakesVIP++ ━━━━━━", NamedTextColor.GOLD));
+            player.sendMessage(Component.text("⚠ El panel de configuración /vip es exclusivo para jugadores con rango VIP activo.", NamedTextColor.RED));
+            player.sendMessage(Component.text("El primer rango VIP de pago es ", NamedTextColor.GRAY)
+                    .append(Component.text("Hércules", NamedTextColor.GOLD, TextDecoration.BOLD))
+                    .append(Component.text(" (disponible en ", NamedTextColor.GRAY))
+                    .append(Component.text("web.drakescraft.cl", NamedTextColor.AQUA, TextDecoration.UNDERLINED))
+                    .append(Component.text(").", NamedTextColor.GRAY)));
+            player.sendMessage(Component.text("▶ Consulta todos los rangos y sus habilidades con: ", NamedTextColor.YELLOW)
+                    .append(Component.text("/vip catalogo", NamedTextColor.GOLD, TextDecoration.BOLD)));
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.8f, 1.0f);
+            return true;
+        }
+
+        // Si tiene rango VIP pertinente (Hércules o superior), abre el menú interactivo
         vipGui.open(player);
         return true;
     }

@@ -42,27 +42,56 @@ public final class VipManager {
         }
     }
 
+    public LuckPerms getLuckPerms() {
+        return luckPerms;
+    }
+
     /**
-     * Recalcula y cachea el tier del jugador leyendo sus grupos LuckPerms.
-     * Gana la jerarquia mas alta entre los grupos VIP que posea.
+     * Recalcula y cachea el tier del jugador leyendo sus grupos LuckPerms directamente.
+     * Gana la jerarquia mas alta entre los grupos VIP que posea (desde Hércules = 1).
      */
     @Nullable
     public VipTier refresh(Player player) {
-        if (luckPerms == null) {
+        if (player == null || !player.isOnline()) {
             return null;
         }
         VipTier best = null;
         try {
-            User user = luckPerms.getPlayerAdapter(Player.class).getUser(player);
-            for (Group group : user.getInheritedGroups(user.getQueryOptions())) {
-                VipTier tier = VipTier.fromGroup(group.getName());
-                if (tier != null && (best == null || tier.getHierarchy() > best.getHierarchy())) {
-                    best = tier;
+            if (luckPerms != null) {
+                User user = luckPerms.getPlayerAdapter(Player.class).getUser(player);
+                if (user != null) {
+                    // 1. Grupos heredados activos en el contexto actual
+                    for (Group group : user.getInheritedGroups(user.getQueryOptions())) {
+                        VipTier tier = VipTier.fromGroup(group.getName());
+                        if (tier != null && (best == null || tier.getHierarchy() > best.getHierarchy())) {
+                            best = tier;
+                        }
+                    }
+
+                    // 2. Nodos de herencia directos (incluyendo temporales)
+                    for (net.luckperms.api.node.types.InheritanceNode node : user.getNodes(net.luckperms.api.node.NodeType.INHERITANCE)) {
+                        if (!node.hasExpired()) {
+                            VipTier tier = VipTier.fromGroup(node.getGroupName());
+                            if (tier != null && (best == null || tier.getHierarchy() > best.getHierarchy())) {
+                                best = tier;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Verificación de permisos Bukkit (LuckPerms inyecta group.<groupname> automáticamente)
+            for (VipTier tier : VipTier.values()) {
+                if (player.hasPermission("group." + tier.getGroup())) {
+                    if (best == null || tier.getHierarchy() > best.getHierarchy()) {
+                        best = tier;
+                    }
                 }
             }
         } catch (Exception ex) {
             logger.warning("No se pudo resolver el tier VIP de " + player.getName() + ": " + ex.getMessage());
         }
+
         if (best != null) {
             cache.put(player.getUniqueId(), best);
         } else {
@@ -71,19 +100,27 @@ public final class VipManager {
         return best;
     }
 
-    /** Tier cacheado (sin recalcular). Null si no es VIP. */
+    /** Tier cacheado o recalculado al vuelo si no estaba presente. Null si no es VIP. */
+    @Nullable
+    public VipTier getTier(Player player) {
+        if (player == null) {
+            return null;
+        }
+        VipTier tier = cache.get(player.getUniqueId());
+        if (tier == null) {
+            tier = refresh(player);
+        }
+        return tier;
+    }
+
     @Nullable
     public VipTier getTier(UUID uuid) {
         return cache.get(uuid);
     }
 
-    @Nullable
-    public VipTier getTier(Player player) {
-        return cache.get(player.getUniqueId());
-    }
-
     public boolean isVip(Player player) {
-        return cache.containsKey(player.getUniqueId());
+        VipTier tier = getTier(player);
+        return tier != null && tier.getHierarchy() >= VipTier.HERCULES.getHierarchy();
     }
 
     public void clear(UUID uuid) {

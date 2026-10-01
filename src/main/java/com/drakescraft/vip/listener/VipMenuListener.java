@@ -62,6 +62,11 @@ public final class VipMenuListener implements Listener {
             }
 
             if (slot == VipGui.SLOT_CATALOG_BACK) {
+                if (!vipManager.isVip(player)) {
+                    player.sendMessage(Component.text("⚠ El panel de configuración VIP requiere un rango activo (desde Hércules).", NamedTextColor.RED));
+                    player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 1.0f);
+                    return;
+                }
                 vipGui.open(player);
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.7f, 1.2f);
                 return;

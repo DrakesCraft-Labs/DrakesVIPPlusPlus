@@ -63,10 +63,16 @@ public enum VipTier {
             return null;
         }
         String normalized = groupName.toLowerCase(Locale.ROOT).trim();
+        if (normalized.startsWith("group.")) {
+            normalized = normalized.substring("group.".length());
+        }
         for (VipTier tier : values()) {
             if (tier.group.equals(normalized)) {
                 return tier;
             }
+        }
+        if ("titanoceano".equals(normalized)) {
+            return TITAN_OCEANO;
         }
         return null;
     }

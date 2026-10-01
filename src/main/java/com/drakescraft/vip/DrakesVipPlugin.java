@@ -80,7 +80,23 @@ public final class DrakesVipPlugin extends JavaPlugin {
 
         // Comando
         if (getCommand("vip") != null) {
-            getCommand("vip").setExecutor(new VipCommand(this, vipGui));
+            getCommand("vip").setExecutor(new VipCommand(this, vipGui, vipManager));
+        }
+
+        // Suscribirse al EventBus de LuckPerms para actualizar rangos y buffs en tiempo real
+        if (vipManager.getLuckPerms() != null) {
+            vipManager.getLuckPerms().getEventBus().subscribe(this, net.luckperms.api.event.user.UserDataRecalculateEvent.class, event -> {
+                Player player = getServer().getPlayer(event.getUser().getUniqueId());
+                if (player != null && player.isOnline()) {
+                    getServer().getScheduler().runTask(this, () -> {
+                        if (player.isOnline()) {
+                            VipTier tier = vipManager.refresh(player);
+                            buffManager.apply(player, tier);
+                            skillHook.refresh(player);
+                        }
+                    });
+                }
+            });
         }
 
         // Tasks
@@ -99,7 +115,7 @@ public final class DrakesVipPlugin extends JavaPlugin {
             skillHook.refresh(player);
         }
 
-        getLogger().info("DrakesVIP++ habilitado: 15 tiers + booster de finde + GUI de alternancia.");
+        getLogger().info("DrakesVIP++ habilitado: 15 tiers (desde Hércules) + booster de finde + GUI de alternancia.");
     }
 
     @Override
